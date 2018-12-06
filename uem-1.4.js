@@ -41,10 +41,10 @@ var getUUID = function () {
 }
 /* Save or Fixup console, sometimes the console maybe destroyed by business code */
 var saveOrigConsole = function () {
-	if (!top['origConsole']) top['origConsole'] = console;
+	// if (!top['origConsole']) top['origConsole'] = console;
 }
 var tryFixupConsole = function () {
-	if (!console.profile) console = top['origConsole'];
+	// if (!console.profile) console = top['origConsole'];
 }
 /* Not Used. Turn off the unbind feature to prevent specific event interceptors from being overwritten */
 /* Usage: disableUnbind(document, 'mouseup'); */
@@ -120,7 +120,7 @@ var intercept = function (doc) {
 }
 function postAjax(json_str) {
 	tryFixupConsole();
-	console.log(json_str);
+	// console.log(json_str);
 	if (typeof($) != 'undefined' && typeof($.ajax) != 'undefined') {
 		$.ajax({
 			type: "POST",
@@ -129,10 +129,10 @@ function postAjax(json_str) {
 			dataType: "json",
 			data: json_str,
 			success: function (jsonResult) {
-				console.log(jsonResult);
+				// console.log(jsonResult);
 			},
 			error: function (XMLHttpRequest, textStatus, errorThrown) {
-				console.log("Response Code: " + XMLHttpRequest.status + ", Ready State: " + XMLHttpRequest.readyState);
+				// console.log("Response Code: " + XMLHttpRequest.status + ", Ready State: " + XMLHttpRequest.readyState);
 			}
 		});
 	} else {
@@ -141,7 +141,7 @@ function postAjax(json_str) {
 		xhr.onreadystatechange = function() {
 			if(xhr.readyState == XMLHttpRequest.DONE) {
 				if(xhr.status == 200) {
-					console.log(xhr.responseText);
+					// console.log(xhr.responseText);
 				}
 			}
 		};
