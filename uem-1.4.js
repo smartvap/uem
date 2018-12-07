@@ -137,7 +137,7 @@ function postAjax(json_str) {
 		});
 	} else {
 		var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
-		xhr.open("POST", 'http://10.19.193.135/ssyth/jsp/busi004/getcrmuseraction.jsp', true);
+		xhr.open("POST", 'http://10.19.203.142/ssyth/jsp/busi004/getcrmuseraction.jsp', true);
 		xhr.onreadystatechange = function() {
 			if(xhr.readyState == XMLHttpRequest.DONE) {
 				if(xhr.status == 200) {
