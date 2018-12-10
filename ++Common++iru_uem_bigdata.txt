@@ -1,0 +1,21 @@
+when HTTP_REQUEST {
+	if {[HTTP::method] eq "POST"} {
+		# Trigger the collection for up to 1MB of data
+		if {[HTTP::header Content-Length] ne "" and [HTTP::header value Content-Length] <= 1048576} {
+			set content_length [HTTP::header value Content-Length]
+		} else {
+			set content_length 1048576
+		}
+		# Check if $content-length is not set to 0
+		if {$content_length > 0} {
+			HTTP::collect $content_length
+		}
+	}
+}
+
+when HTTP_REQUEST_DATA {
+	# Do stuff with the payload
+	set payload [HTTP::payload]
+	set hsl [HSL::open -proto UDP -pool pool_syslog]
+	HSL::send $hsl $payload
+}
