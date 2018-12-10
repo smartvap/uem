@@ -227,7 +227,7 @@ var parseLoginError = function (doc) {
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			jsonObj['ERROR'] = errMsg;
-			postAjax(jsonObj);
+			postAjax(JSON.stringify(jsonObj));
 		}
 	}
 }
@@ -245,7 +245,7 @@ var parseErrorPage = function (doc) {
 		}
 		var errDetail = doc.getElementById('messagedetail');
 		if (errDetail) jsonObj['ERR_DETAIL'] = errDetail.rows[0].cells[0].innerText;
-		postAjax(jsonObj);
+		postAjax(JSON.stringify(jsonObj));
 	}
 }
 /* Error Type 3 */
@@ -276,7 +276,7 @@ var parseExceptionPage = function (doc) {
 				jsonObj['STACK_INFO'] = tds[i].innerText;
 			}
 		}
-		postAjax(jsonObj);
+		postAjax(JSON.stringify(jsonObj));
 	}
 }
 /* Error Type 4: Popwin Error */

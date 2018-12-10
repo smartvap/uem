@@ -137,7 +137,7 @@ function postAjax(json_str) {
 		});
 	} else {
 		var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
-		xhr.open("POST", 'http://10.19.193.135/ssyth/jsp/busi004/getcrmuseraction.jsp', true);
+		xhr.open("POST", 'http://10.19.203.142/ssyth/jsp/busi004/getcrmuseraction.jsp', true);
 		xhr.onreadystatechange = function() {
 			if(xhr.readyState == XMLHttpRequest.DONE) {
 				if(xhr.status == 200) {
@@ -227,7 +227,7 @@ var parseLoginError = function (doc) {
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			jsonObj['ERROR'] = errMsg;
-			postAjax(jsonObj);
+			postAjax(JSON.stringify(jsonObj));
 		}
 	}
 }
@@ -245,7 +245,7 @@ var parseErrorPage = function (doc) {
 		}
 		var errDetail = doc.getElementById('messagedetail');
 		if (errDetail) jsonObj['ERR_DETAIL'] = errDetail.rows[0].cells[0].innerText;
-		postAjax(jsonObj);
+		postAjax(JSON.stringify(jsonObj));
 	}
 }
 /* Error Type 3 */
@@ -276,7 +276,7 @@ var parseExceptionPage = function (doc) {
 				jsonObj['STACK_INFO'] = tds[i].innerText;
 			}
 		}
-		postAjax(jsonObj);
+		postAjax(JSON.stringify(jsonObj));
 	}
 }
 /* Error Type 4: Popwin Error */
