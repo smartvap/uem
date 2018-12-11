@@ -1,0 +1,45 @@
+{
+   "template" : "uem_json_*",
+   "order" : 0,
+   "settings" : {
+      "index.number_of_replicas" : "1",
+      "index.number_of_shards" : "5",
+      "index.refresh_interval" : "10s"
+   },
+   "mappings" : {
+      "doc" : {
+         "properties" : {
+            "@timestamp" : {
+               "format" : "strict_date_optional_time || epoch_millis",
+               "type" : "date"
+            },
+            "IP" : { "type" : "keyword" },
+            "MAC" : { "type" : "keyword" },
+            "STAFFID" : { "type" : "keyword" },
+            "STAFFTELNO" : { "type" : "keyword" },
+            "ORGAID" : { "type" : "keyword" },
+            "Curr_Time_of_Term" : { "type" : "keyword" },
+            "Elem_Outer_Html" : { "type" : "keyword" },
+            "Oper_Type" : { "type" : "keyword" },
+            "New_Value" : { "type" : "keyword" },
+            "Location" : { "type" : "keyword" },
+            "XTag" : { "type" : "keyword" },
+            "ERROR" : { "type" : "keyword" },
+            "Cause" : { "type" : "keyword" },
+            "ERR_DESC" : { "type" : "keyword" },
+            "ERR_DETAIL" : { "type" : "keyword" },
+            "DETAIL" : { "type" : "keyword" },
+            "SOLUTION" : { "type" : "keyword" },
+            "ERRCODE" : { "type" : "keyword" },
+            "STACK_INFO" : { "type" : "keyword" },
+            "Sys_Prompt" : { "type" : "keyword" },
+            "Confirm" : { "type" : "keyword" },
+            "Open" : { "type" : "keyword" },
+            "Modal" : { "type" : "keyword" },
+            "Modeless" : { "type" : "keyword" },
+            "Popup_Tab" : { "type" : "keyword" },
+            "Shutdown_Tab" : { "type" : "keyword" }
+         }
+      }
+   }
+}
