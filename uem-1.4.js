@@ -162,11 +162,7 @@ var elemSelect = function (elem, operTyp) {
 	if (operTyp == 'change') jsonObj['New_Value'] = elem.value;
 	jsonObj['Location'] = elem.ownerDocument['Full_path'];
 	jsonObj['XTag'] = getUUID();
-	if (typeof(top.setCookieNoCode) == 'undefined') {
-		top.document.cookie += '; XTag=' + jsonObj['XTag'];
-	} else {
-		top.setCookieNoCode("XTag", jsonObj['XTag']);
-	}
+	elem.ownerDocument.cookie = 'XTag=' + jsonObj['XTag'] + '; path=/';
 	postAjax(JSON.stringify(jsonObj));
 }
 /* Mark the border of the target element to red */

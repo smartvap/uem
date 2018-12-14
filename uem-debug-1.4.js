@@ -131,6 +131,10 @@ function postAjax(json_str) {
 			success: function (jsonResult) {
 				console.log(jsonResult);
 			},
+			// Header XTag is currently disabled
+			// beforeSend: function (xhr) {
+			// 	xhr.setRequestHeader('XTag', getUUID());
+			// },
 			error: function (XMLHttpRequest, textStatus, errorThrown) {
 				console.log("Response Code: " + XMLHttpRequest.status + ", Ready State: " + XMLHttpRequest.readyState);
 			}
@@ -138,6 +142,7 @@ function postAjax(json_str) {
 	} else {
 		var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
 		xhr.open("POST", 'http://10.19.203.142/ssyth/jsp/busi004/getcrmuseraction.jsp', true);
+		xhr.setRequestHeader('XTag', getUUID());
 		xhr.onreadystatechange = function() {
 			if(xhr.readyState == XMLHttpRequest.DONE) {
 				if(xhr.status == 200) {
@@ -162,11 +167,8 @@ var elemSelect = function (elem, operTyp) {
 	if (operTyp == 'change') jsonObj['New_Value'] = elem.value;
 	jsonObj['Location'] = elem.ownerDocument['Full_path'];
 	jsonObj['XTag'] = getUUID();
-	if (typeof(top.setCookieNoCode) == 'undefined') {
-		top.document.cookie += '; XTag=' + jsonObj['XTag'];
-	} else {
-		top.setCookieNoCode("XTag", jsonObj['XTag']);
-	}
+	elem.ownerDocument.cookie = 'XTag=' + jsonObj['XTag'] + '; path=/';
+	debugger;
 	postAjax(JSON.stringify(jsonObj));
 }
 /* Mark the border of the target element to red */
