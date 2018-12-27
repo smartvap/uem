@@ -295,6 +295,12 @@ var interceptPopwinExcept = function (doc) {
 		/* Intercept commonUtil.showWindow */
 		var origShowWnd = doc.parentWindow.commonUtil.showWindow;
 		doc.parentWindow.commonUtil.showWindow = function(wintype, url, args, style) {
+			if (arguments.length == 3) { // The order and number of entries must follow the conventions of business code
+				style = arguments[2];
+				args = arguments[1];
+				url = arguments[0];
+				wintype = "0";
+			}
 			var jsonObj = clone(top['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
