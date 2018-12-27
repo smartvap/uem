@@ -19,6 +19,7 @@ if (typeof(JSON) == 'undefined') {
 	document.write("<script language='javascript' src='/uem/json2.js'></script>");
 }
 /* Clone Any Object */
+/* Deprecated, use mergeJson instead */
 var clone = function (original) {
 	var obj = {};
 	for (var i in original) {
@@ -38,6 +39,22 @@ var getUUID = function () {
     s[8] = s[13] = s[18] = s[23] = "-";
     var uuid = s.join("");
     return uuid;
+}
+/* Read cookie value using regular expression */
+var getCookieValue = function (cok, name) {
+	var arr, reg = new RegExp("(^| )" + name + "=([^;]*)(;|$)");
+	if (arr = cok.match(reg))
+		return unescape(arr[2]);
+	else
+		return null;
+}
+/* Read parameter value using regular expression */
+var getParaValue = function (para, name) {
+	var reg = new RegExp("(^|&|\\?)" + name + "=([^&]*)(&|$)");
+	if (arr = para.match(reg))
+		return unescape(arr[2]);
+	else
+		return null;
 }
 /* Save or Fixup console, sometimes the console maybe destroyed by business code */
 var saveOrigConsole = function () {
@@ -132,6 +149,7 @@ function postAjax(json_str) {
 				console.log(jsonResult);
 			},
 			// Header XTag is currently disabled
+			// It may be used on browsers that disabled cookies
 			// beforeSend: function (xhr) {
 			// 	xhr.setRequestHeader('XTag', getUUID());
 			// },
@@ -153,6 +171,17 @@ function postAjax(json_str) {
 		xhr.send(json_str);
 	}
 }
+/* Merge the common uem parts in top & doc into one json object */
+var mergeJson = function (json1, json2) {
+	var mergedJson = {};
+	for (var attr in json1) {
+		mergedJson[attr] = json1[attr];
+	}
+	for (var attr in json2) {
+		mergedJson[attr] = json2[attr];
+	}
+	return mergedJson;
+}
 /* The element operation handler */
 var elemSelect = function (elem, operTyp) {
 	// setBorderStyle(elem);
@@ -160,7 +189,7 @@ var elemSelect = function (elem, operTyp) {
 	var currTm = new Date().getTime();
 	if (elem['Msg_Delivered_Time'] && currTm - elem['Msg_Delivered_Time'] <= 500) return; // Check if triggered 1 event 2 times in 0.5s
 	else elem['Msg_Delivered_Time'] = currTm;
-	var jsonObj = clone(top['uem_common']);
+	var jsonObj = mergeJson(top['uem_common'], elem.ownerDocument['uem_common']);
 	jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 	jsonObj['Elem_Outer_Html'] = elem.outerHTML;
 	jsonObj['Oper_Type'] = operTyp;
@@ -168,7 +197,6 @@ var elemSelect = function (elem, operTyp) {
 	jsonObj['Location'] = elem.ownerDocument['Full_path'];
 	jsonObj['XTag'] = getUUID();
 	elem.ownerDocument.cookie = 'XTag=' + jsonObj['XTag'] + '; path=/';
-	debugger;
 	postAjax(JSON.stringify(jsonObj));
 }
 /* Mark the border of the target element to red */
@@ -225,7 +253,7 @@ var parseLoginError = function (doc) {
 		var errMsgDivs = document.getElementsByClassName('login_box_div login_errormessage');
 		if (errMsgDivs.length > 0) {
 			var errMsg = errMsgDivs[0].innerText.replace('\r', '').replace('\n', '');
-			var jsonObj = clone(top['uem_common']);
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			jsonObj['ERROR'] = errMsg;
@@ -236,7 +264,7 @@ var parseLoginError = function (doc) {
 /* Error Type 2 */
 var parseErrorPage = function (doc) {
 	if (doc && doc.getElementById("errorMsg") != null) {
-		var jsonObj = clone(top['uem_common']);
+		var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 		jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 		if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 		var errDesc = doc.getElementsByTagName('font');
@@ -262,7 +290,7 @@ var parseExceptionPage = function (doc) {
 		}
 	}
 	if (ifTagExist) {
-		var jsonObj = clone(top['uem_common']);
+		var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 		jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 		if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 		var labels = doc.getElementsByTagName("label");
@@ -287,7 +315,7 @@ var interceptPopwinExcept = function (doc) {
 		/* Intercept commonUtil.frameMsgbox */
 		var origPopwin = doc.parentWindow.commonUtil.frameMsgbox;
 		doc.parentWindow.commonUtil.frameMsgbox = function($scope,type,title,msg,okCallBack,cancelCallBack,closeCallBack,width,height){
-			var jsonObj = clone(top['uem_common']);
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			for (var key in msg) {
@@ -301,7 +329,13 @@ var interceptPopwinExcept = function (doc) {
 		/* Intercept commonUtil.showWindow */
 		var origShowWnd = doc.parentWindow.commonUtil.showWindow;
 		doc.parentWindow.commonUtil.showWindow = function(wintype, url, args, style) {
-			var jsonObj = clone(top['uem_common']);
+			if (arguments.length == 3) { // The order and number of entries must follow the conventions of business code
+				style = arguments[2];
+				args = arguments[1];
+				url = arguments[0];
+				wintype = "0";
+			}
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			jsonObj['Pop_Window'] = url;
@@ -311,7 +345,7 @@ var interceptPopwinExcept = function (doc) {
 		/* Intercept Loading Prompt */
 		var origLoadStart = doc.parentWindow.commonUtil.startLoading;
 		doc.parentWindow.commonUtil.startLoading = function() {
-			var jsonObj = clone(top['uem_common']);
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			jsonObj['Sys_Prompt'] = 'Loading...';
@@ -320,7 +354,7 @@ var interceptPopwinExcept = function (doc) {
 		}
 		var origLoadEnd = doc.parentWindow.commonUtil.endLoading;
 		doc.parentWindow.commonUtil.endLoading = function() {
-			var jsonObj = clone(top['uem_common']);
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			jsonObj['Sys_Prompt'] = 'Load Complete.';
@@ -334,7 +368,7 @@ var interceptReqProcFail = function (doc) {
 	if (doc.getElementsByTagName('TITLE').length == 0) return;
 	var title = doc.getElementsByTagName('TITLE')[0].innerText;
 	if (title == '请求处理失败') {
-		var jsonObj = clone(top['uem_common']);
+		var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 		jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 		if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 		jsonObj['ERROR'] = title;
@@ -347,7 +381,7 @@ var intercept500Error = function (doc) {
 	if (doc.getElementsByTagName('TITLE').length == 0) return;
 	var title = doc.getElementsByTagName('TITLE')[0].innerText;
 	if (title == '500 Internal Server Error') {
-		var jsonObj = clone(top['uem_common']);
+		var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 		jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 		if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 		jsonObj['ERROR'] = title;
@@ -365,7 +399,7 @@ var interceptMsgBoxes = function (doc) {
 	var _alert = doc.parentWindow.alert;
 	if (_alert.toString && _alert.toString().indexOf('uem_common') == -1) { // check if already intercepted
 		doc.parentWindow.alert = function (msg) {
-			var jsonObj = clone(top['uem_common']);
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			jsonObj['Alert'] = msg;
@@ -377,7 +411,7 @@ var interceptMsgBoxes = function (doc) {
 	var _confirm = doc.parentWindow.confirm;
 	if (_confirm.toString && _confirm.toString().indexOf('uem_common') == -1) {
 		doc.parentWindow.confirm = function (msg) {
-			var jsonObj = clone(top['uem_common']);
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			jsonObj['Confirm'] = msg;
@@ -389,7 +423,7 @@ var interceptMsgBoxes = function (doc) {
 	var _open = doc.parentWindow.open;
 	if (_open.toString && _open.toString().indexOf('uem_common') == -1) {
 		doc.parentWindow.open = function (url, name, features, replace) {
-			var jsonObj = clone(top['uem_common']);
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			jsonObj['Open'] = url;
@@ -401,7 +435,7 @@ var interceptMsgBoxes = function (doc) {
 	var _showModalDialog = doc.parentWindow.showModalDialog;
 	if (_showModalDialog.toString && _showModalDialog.toString().indexOf('uem_common') == -1) {
 		doc.parentWindow.showModalDialog = function (sURL, vArguments, sFeatures) {
-			var jsonObj = clone(top['uem_common']);
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			jsonObj['Modal'] = sURL;
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
@@ -413,7 +447,7 @@ var interceptMsgBoxes = function (doc) {
 	var _showModelessDialog = doc.parentWindow.showModelessDialog;
 	if (_showModelessDialog.toString && _showModelessDialog.toString().indexOf('uem_common') == -1) {
 		doc.parentWindow.showModelessDialog = function (sURL, vArguments, sFeatures) {
-			var jsonObj = clone(top['uem_common']);
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			jsonObj['Modeless'] = sURL;
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
@@ -422,8 +456,10 @@ var interceptMsgBoxes = function (doc) {
 		};
 	}
 }
-/* UEM Common Info JSON Object Initialize */
+/* Top UEM Common Info JSON Object Initialize */
+/* Current Document UEM Common Info JSON Object Initialize */
 var getUemCommonInfo = function (doc) {
+	// Top UEM Common Info initialized only in the framework initialization
 	if (!top['uem_common']) top['uem_common'] = {};
 	if (!top['uem_common']['IP'] || !top['uem_common']['MAC']) { // For session not logged in
 		var ipMac = queryIPMAC();
@@ -442,8 +478,33 @@ var getUemCommonInfo = function (doc) {
 			}
 		}
 	}
+	// Current Document UEM Common Info initialized for each document
+	if (!doc['uem_common']) doc['uem_common'] = {};
+	if (doc.location.search) {
+		var tabName = getParaValue(doc.location.search, 'tabname');
+		if (tabName) doc['uem_common']['Tab_Name'] = decodeURI(tabName);
+		var tabId = getParaValue(doc.location.search, 'tabid');
+		if (tabId) doc['uem_common']['Tab_Id'] = decodeURI(tabId);
+		var bmeBusi = getParaValue(doc.location.search, 'BMEBusiness');
+		if (bmeBusi) doc['uem_common']['BMEBusiness'] = bmeBusi;
+	}
+	if (doc.cookie) {
+		var currMenuId = getCookieValue(doc.cookie, 'com.huawei.boss.CURRENT_MENUID');
+		if (currMenuId && currMenuId != 'null') doc['uem_common']['Curr_Menu_Id'] = currMenuId;
+		var currTabId = getCookieValue(doc.cookie, 'com.huawei.boss.CURRENT_TAB');
+		if (currTabId && currTabId != 'null') doc['uem_common']['Curr_Tab_Id'] = currTabId;
+	}
+	if (doc.referrer) {
+		var tabName = getParaValue(doc.referrer, 'tabname');
+		if (tabName) doc['uem_common']['Refer_Tab_Name'] = decodeURI(tabName);
+		var tabId = getParaValue(doc.referrer, 'tabid');
+		if (tabId) doc['uem_common']['Refer_Tab_Id'] = decodeURI(tabId);
+		var bmeBusi = getParaValue(doc.referrer, 'BMEBusiness');
+		if (bmeBusi) doc['uem_common']['Refer_BMEBusiness'] = bmeBusi;
+	}
 }
 /* Trace the path of the top window */
+/* The Modal or Modaless dialog should trace the opener */
 var tracePath = function (doc) {
 	var wnd = doc.parentWindow;
 	var path = wnd.location.pathname;
@@ -454,17 +515,26 @@ var tracePath = function (doc) {
 		nDepth = nDepth + 1;
 		if (nDepth >= 6) break; // Reach the maximum depth
 	}
+	// Unavailable for Enterprise Model
+	// while (wnd.dialogArguments) { // showModalDialog got the opener
+	// 	wnd = wnd.dialogArguments;
+	// 	path = wnd.location.pathname + ' >> ' + path;
+	// 	var parentTop = wnd.top;
+	// 	while (! (wnd === parentTop)) {
+	// 		wnd = wnd.parent;
+	// 		path = wnd.location.pathname + ' >> ' + path;
+	// 	}
+	// }
+	// while (wnd.opener) { // open got the opener
+	// 	wnd = wnd.opener;
+	// 	path = wnd.location.pathname + ' >> ' + path;
+	// 	var parentTop = wnd.top;
+	// 	while (! (wnd === parentTop)) {
+	// 		wnd = wnd.parent;
+	// 		path = wnd.location.pathname + ' >> ' + path;
+	// 	}
+	// }
 	doc['Full_path'] = path; // Write path to properties for a rainy day
-}
-/* Get Key Business Information */
-var getKeyBusiInfo = function (doc) {
-	var para = doc.location.search;
-	var idx = para.indexOf('BMEBusiness');
-	if (idx == -1) return;
-	para = para.substr(idx).split('&')[0]; // Get BMEBusiness part
-	var arr = para.split('=');
-	if (arr.length >= 2) doc['BMEBusiness'] = arr[1];
-	
 }
 /* Observe Element Property Changes */
 var obsvElemPropChgs = function (elem, options, actions) {
@@ -483,13 +553,13 @@ var monitorMainFrmLoad = function (doc) {
 	if (!doc.getElementById('loading')) return;
 	top['Mainfrm_Load_Monitor'] = obsvElemPropChgs(doc.getElementById('loading'), { attributes : true }, function (obj) {
 		if (obj.attributeName == 'style' && obj.target.style.display != 'none') {
-			var jsonObj = clone(top['uem_common']);
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			jsonObj['Sys_Prompt'] = 'NGCRM系统主界面加载中...';
 			postAjax(JSON.stringify(jsonObj));
 		} else if (obj.attributeName == 'style' && obj.target.style.display == 'none') {
-			var jsonObj = clone(top['uem_common']);
+			var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 			jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 			if (doc['Full_path']) jsonObj['Location'] = doc['Full_path'];
 			jsonObj['Sys_Prompt'] = 'NGCRM系统主界面加载完成.';
@@ -502,7 +572,7 @@ var monitorTabSet = function (doc) {
 	if (doc.location.pathname != "/ngcrm/crm3/mainFrameForCRM3.action") return; // You can find tabset in main frame
 	if (!top || !top.publicObject || !top.publicObject['mainTab'] || !top.publicObject["mainTab"].oTabHeadSet) return;
 	var moHdr = obsvElemPropChgs(top.publicObject["mainTab"].oTabHeadSet, { childList : true }, function (hdrs) { // Intercept Tabset Headers
-		var jsonObj = clone(top['uem_common']);
+		var jsonObj = mergeJson(top['uem_common'], doc['uem_common']);
 		jsonObj['Curr_Time_of_Term'] = new Date().toLocaleString();
 		for (var i = 0; i < hdrs.addedNodes.length; i++) { // For each of new created headers
 			if (hdrs.addedNodes[i]['Msg_Delivered']) { // To avoid monitored duplicate nodes changing
