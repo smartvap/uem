@@ -139,7 +139,7 @@ function postAjax(json_str) {
 		var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
 		xhr.open("POST", 'http://10.19.203.142/ssyth/jsp/busi004/getcrmuseraction.jsp', true);
 		xhr.onreadystatechange = function() {
-			if(xhr.readyState == XMLHttpRequest.DONE) {
+			if(xhr.readyState == 4) { // Sometimes XMLHttpRequest does not exists
 				if(xhr.status == 200) {
 					// console.log(xhr.responseText);
 				}
@@ -191,18 +191,19 @@ var queryIPMAC = function () {
 			break;
 		}
 		if (mac) {
-			properties = serviceInfo.ExecQuery("SELECT IPAddress,MACAddress FROM Win32_NetworkAdapterConfiguration");
+			properties = serviceInfo.ExecQuery("SELECT IPAddress, MACAddress, DNSServerSearchOrder FROM Win32_NetworkAdapterConfiguration");
 			e = new Enumerator(properties);
 			for (; !e.atEnd(); e.moveNext()) {
 				var p = e.item();
 				var ip = "" + p.IPAddress(0);
 				var m = "" + p.MACAddress;
+				var dns = "" + p.DNSServerSearchOrder(0);
 				if(ip != "" && ip != "0.0.0.0" && m == mac) {
-					ipmac = ip;
+					ipmac = ip + ";" + dns;
 					break;
 				}
 			}
-			ipmac = mac.replace(/:/g, "-")+";"+ipmac;
+			ipmac = mac.replace(/:/g, "-") + ";" + ipmac;
 		}
 		e = null;
 		properties = null;
@@ -212,6 +213,98 @@ var queryIPMAC = function () {
 	locatorInfo = null;
 	serviceInfo = null;		
 	return ipmac;
+}
+/* Query Terminal's HOSTS Settings */
+var queryHost = function () {
+	var wsh; // the activex object for environment variables
+	var fso; // the activex object for file access
+	var hostPath; // host file full path
+	var hostFile; // the hosts file
+	var errItems = ''; // incorrect configurations
+	try {
+		wsh = new ActiveXObject("WScript.Shell");
+		hostPath = wsh.ExpandEnvironmentStrings("%SystemRoot%") + "\\system32\\drivers\\etc\\hosts";
+		fso = new ActiveXObject("Scripting.FileSystemObject");
+		hostFile = fso.OpenTextFile(hostPath, 1, false);
+		while (!hostFile.AtEndOfStream) {
+			var line = hostFile.ReadLine();
+			if (line.indexOf('10.19.203') != -1 && line.indexOf('#') != 0) {
+				if (errItems != '') errItems += ';'
+				errItems += line;
+			}
+		}
+		hostFile.close();
+		var jsonObj = clone(top['uem_common']); // priority to send
+		jsonObj['ERR_HOSTS'] = errItems;
+		postAjax(JSON.stringify(jsonObj));
+	} catch (e) {
+		wsh = null;
+	}
+}
+/* Fixup Host Settings */
+/* Bug: Should run only once when 4A redirected */
+var fixupHost = function () {
+	if (doc.location.pathname != "/ngcrm/ngportal/loginNew.action") return;
+	var wsh; // the activex object for environment variables
+	var fso; // the activex object for file access
+	var hostPath; // host file full path
+	var hostFile; // the hosts file
+	var arrItem = new Array(); // correct configurations
+	try {
+		wsh = new ActiveXObject("WScript.Shell");
+		hostPath = wsh.ExpandEnvironmentStrings("%SystemRoot%") + "\\system32\\drivers\\etc\\hosts";
+		fso = new ActiveXObject("Scripting.FileSystemObject");
+		hostFile = fso.OpenTextFile(hostPath, 1, false); // Read the file content
+		while (!hostFile.AtEndOfStream) {
+			var line = hostFile.ReadLine();
+			if (line.indexOf('10.19.203.90') == -1 && line.indexOf('10.19.244.91') == -1 && line.indexOf('10.19.203.137') == -1 && line.indexOf('10.19.203.139') == -1) {
+				arrItem.push(line);
+			}
+		}
+		hostFile.close();
+		if (arrItem.length > 0) {
+			fso.GetFile(hostPath).Attributes = 32; // Set the file attribute to archive
+			hostFile = fso.OpenTextFile(hostPath, 2, false); // Write the file
+			for (var i = 0; i < arrItem.length; i++) {
+				hostFile.writeLine(arrItem[i]);
+			}
+			hostFile.close();
+			fso.GetFile(hostPath).Attributes = 35; // Set the file attribute to archive + hidden + readonly
+		}
+	} catch (e) {
+		wsh = null;
+	}
+}
+/* Fixup DNS Settings */
+var fixupDNS = function () {
+	if (doc.location.pathname != "/ngcrm/ngportal/loginNew.action") return;
+	var locatorInfo;
+	var serviceInfo;
+	try {
+		locatorInfo = new ActiveXObject ("WbemScripting.SWbemLocator");
+		serviceInfo = locatorInfo.ConnectServer(".");
+		// Get the next hop from the default route
+		var routes = serviceInfo.ExecQuery("SELECT NextHop FROM Win32_IP4RouteTable WHERE Destination = '0.0.0.0'");
+		var e = new Enumerator(routes);
+		var nextHop;
+		for (; !e.atEnd(); e.moveNext()) {
+			var p = e.item();
+			nextHop = "" + p.NextHop;
+			break;
+		}
+		// Get the network adapter configuration
+		var nics = serviceInfo.ExecQuery("SELECT * FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = 'True'");
+		var nic = new Enumerator(nics);
+		for (; !nic.atEnd(); e.moveNext()) {
+			if (nic.item().DefaultIPGateway(0) == nextHop && nic.item().DNSServerSearchOrder(0) != "10.19.90.216") {
+				nic.SetDNSServerSearchOrder(["10.19.90.216", "10.19.98.20"]);
+			}
+			break;
+		}
+	} catch (e) {
+	}
+	locatorInfo = null;
+	serviceInfo = null;
 }
 /* Error Type 1 */
 var parseLoginError = function (doc) {
@@ -423,12 +516,17 @@ var interceptMsgBoxes = function (doc) {
 	}
 }
 /* UEM Common Info JSON Object Initialize */
+/* ipMAC format: MAC;IP;DNS */
 var getUemCommonInfo = function (doc) {
 	if (!top['uem_common']) top['uem_common'] = {};
 	if (!top['uem_common']['IP'] || !top['uem_common']['MAC']) { // For session not logged in
 		var ipMac = queryIPMAC();
-		top['uem_common']['IP'] = ipMac.substr(ipMac.indexOf(';') + 1);
+		var occ1st = ipMac.indexOf(';'); // The first occurrence of semicolon
+		var occ2nd = ipMac.indexOf(';', occ1st + 1); // The second occurrence of semicolon
+		top['uem_common']['IP'] = ipMac.substr(ipMac.indexOf(';') + 1, occ2nd - occ1st - 1);
 		top['uem_common']['MAC'] = ipMac.substr(0, ipMac.indexOf(';'));
+		top['uem_common']['DNS'] = ipMac.substr(occ2nd + 1);
+		queryHost();
 	}
 	if (!top['uem_common']['STAFFID'] || !top['uem_common']['STAFFTELNO'] || !top['uem_common']['ORGAID']) {
 		if (doc.location.pathname == "/ngcrm/crm3/mainFrameForCRM3.action") {
@@ -552,6 +650,8 @@ if (window.addEventListener) {
 	window.addEventListener('load', function () {
 		tracePath(document);
 		getUemCommonInfo(document);
+		fixupHost();
+		fixupDNS();
 		monitorMainFrmLoad(document);
 		intercept(document);
 		interceptMsgBoxes(document);
@@ -568,6 +668,8 @@ if (window.addEventListener) {
 	window.attachEvent('onload', function () {
 		tracePath(document);
 		getUemCommonInfo(document);
+		fixupHost();
+		fixupDNS();
 		monitorMainFrmLoad(document);
 		intercept(document);
 		interceptMsgBoxes(document);
