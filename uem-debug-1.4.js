@@ -13,11 +13,15 @@
 * 1. Business Success Layout handle                 *
 * 2. Alert/Confirm still has problem                *
 * 3. Get Key Business Information Not completed     *
+* 4. Cross-domain Security Bugs                     *
 ****************************************************/
 /* If JSON is not supported */
 if (typeof(JSON) == 'undefined') {
 	document.write("<script language='javascript' src='/uem/json2.js'></script>");
 }
+/* Document convert to image */
+document.write("<script type='text/javascript' src='/uem/polyfill.min.js'></script>");
+document.write("<script type='text/javascript' src='/uem/html2canvas.min.js'></script>");
 /* Clone Any Object */
 /* Deprecated, use mergeJson instead */
 var clone = function (original) {
@@ -162,7 +166,7 @@ function postAjax(json_str) {
 		xhr.open("POST", 'http://10.19.203.142/ssyth/jsp/busi004/getcrmuseraction.jsp', true);
 		xhr.setRequestHeader('XTag', getUUID());
 		xhr.onreadystatechange = function() {
-			if(xhr.readyState == XMLHttpRequest.DONE) {
+			if(xhr.readyState == 4) {  // Sometimes XMLHttpRequest does not exists
 				if(xhr.status == 200) {
 					console.log(xhr.responseText);
 				}
@@ -614,7 +618,18 @@ var monitorTabSet = function (doc) {
 		}
 	});
 }
-
+/* Page Snapshot */
+var makePageSnapshot = function (doc) {
+	if (!doc['Snapshot']) { // There is no snapshot yet.
+		html2canvas(doc).then(function(canvas) {
+			var data = canvas.toDataURL('image/png');
+			doc['Snapshot'] = data;
+			doc['Snap_Width'] = canvas.width;
+			doc['Snap_Height'] = canvas.height;
+		}
+	}
+}
+	
 getUemCommonInfo(document);
 interceptMsgBoxes(document);
 
