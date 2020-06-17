@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: custom-http-backend
+  namespace: ns8650d12a171403d6c66001
+spec:
+  selector:
+    matchLabels:
+      app: custom-http-backend
+  template:
+    metadata:
+      labels:
+        app: custom-http-backend
+    spec:
+      containers:
+      - name: custom-http-backend
+        image: inanimate/echo-server
+        ports:
+        - name: http
+          containerPort: 8080
+        imagePullPolicy: IfNotPresent
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: custom-http-backend
+spec:
+  selector:
+    app: custom-http-backend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080

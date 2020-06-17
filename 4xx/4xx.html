@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class=""><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="shortcut icon" type="image/x-icon" href="https://img0.shop.10086.cn/favicon.ico__0.ico">
+    <meta name="WT.location" content="100">
+    <title>山东移动客户关系管理系统</title>
+    <link href="/uem/4xx_files/err.css" rel="stylesheet" type="text/css">
+
+<body style="">
+    <div class="globalMain minHeader">
+        <a href="http://www.10086.cn/" class="logo"><img src="/uem/4xx_files/logo.gif__99.gif"></a>
+    </div>
+    <div class="content" style="margin:0 auto 10px">
+        <div class="error_404">
+            <img src="/uem/4xx_files/404_new.png__97.png">
+            <div class="paddingLeft20">
+                <p class="size16 bold marginTop10"><span class="size20">阿哦</span>，您好像迷路啦！您访问的页面不存在！</p>
+                <div class="marginTop10">请核对您要查找的页面地址是否正确？
+                    <p class="links floatright">
+                        <a href="javascript:history.back(-1)" class="back">返回上一个页面</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div id="footer">
+        <p>
+            <a href="http://www.10086.cn/aboutus/news/" target="_blank">新闻中心</a>
+            | <a href="http://job.10086.cn/" target="_blank">诚聘英才</a>
+            | <a href="http://b2b.10086.cn/" target="_blank">采购信息</a>
+            | <a href="http://www.10086.cn/aboutus/hezuo/" target="_blank">企业合作</a>
+            | <a href="http://www.10086.cn/web_notice/contact/" target="_blank">联系我们</a>
+            | <a href="http://www.10086.cn/web_notice/navigation/" target="_blank">站点导航</a>
+            | <a href="http://labs.chinamobile.com/" target="_blank">中国移动研究院</a>
+            | <a href="http://www.cmdi.chinamobile.com/" target="_blank">中国移动设计院</a>
+            | <a href="http://www.10086.cn/web_notice/links/" target="_blank">友情链接</a>
+            | <a href="https://www.10086.cn/events/djcx/" class="red" style="color:#ed2668" target="_blank">打击传销</a>
+        </p>
+        <p>掌上营业厅：<a href="http://wap.10086.cn/" target="_blank">wap.10086.cn</a> 语音自助服务：10086 短信营业厅：10086 <a href="http://www.10086.cn/support/channel/self_service/" target="_blank">自助终端</a> <a href="http://www.10086.cn/support/channel/Entity1/" target="_blank">营业厅</a> <a href="http://www.10086.cn/cmccclient/index.htm" target="_blank">手机营业厅下载</a></p>
+        <p style="width:300px; margin:0 auto;" class="clearfix">
+            <a target="_blank" href="https://ss.knet.cn/verifyseal.dll?sn=e130905110100423008ilb000000&amp;ct=df&amp;a=1&amp;pa=0.3082310492237422" class="floatleft"><img src="/uem/4xx_files/cnnic.png__0.png" align="absmiddle" oncontextmenu="return false;"></a>
+            <span class="floatleft alignleft" style="padding-left:20px;">
+                <a href="http://beian.miit.gov.cn/" target="_blank"><img src="/uem/4xx_files/gov.gif__0.gif" align="absmiddle">京ICP备05002571号</a><br>　中国移动通信版权所有
+            </span>
+        </p>
+    </div>
+    <div class="mask" id="mask"></div>
+    <div class="lowerIEtips" style="position: fixed;_position: absolute;bottom:0px;display:none;_display:block;">
+        <div class="tipcon"><span><img src="/uem/4xx_files/logo2.png__240.png" style="width: 160px; height: 29px;"></span>
+            <p>您的浏览器版本过低，如果页面显示不正常，建议将浏览器升级到最新版本。</p><!-- <a class="close" id="closeTips"></a> -->
+        </div>
+    </div>
+
+</body>
+    <script type="text/javascript">
+        (function () {
+            function screenResize() {
+                var ScreenWidth = window.screen.width;
+                var client_Width = document.body.clientWidth;
+                var html_ele = document.getElementsByTagName("html");
+                var sw = '';
+                if (ScreenWidth < 1200 || client_Width < 1200) {
+                    sw = 'w1k';
+                }
+                html_ele[0].className = sw;
+                if (window.$ && $.pub) {
+                    $.pub('wkresize', sw);
+                }
+            }
+            screenResize();
+
+            if (window.addEventListener) { //所有主流浏览器，除了 IE 8 及更早 IE版本
+                var tid = null;
+                window.addEventListener('onorientationchange' in window ? 'orientationchange' : 'resize',
+                function () {
+                    clearTimeout(tid);
+                    tid = setTimeout(screenResize, 300);
+                }, false);
+            } else if (window.attachEvent) { // IE 8 及更早 IE 版本
+                var tid = null;
+                window.attachEvent('onorientationchange' in window ? 'onorientationchange' : 'onresize',
+            function () {
+                    clearTimeout(tid);
+                    tid = setTimeout(screenResize, 300);
+                });
+            }
+        })();
+    </script>
+</html>
