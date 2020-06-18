@@ -491,7 +491,7 @@ var traverseSearch = function (node, errKey) {
 /****************************************************
 * To parse 4xx or 5xx error code pages              *
 ****************************************************/
-var arrInterErrs = [ "Internal Error", "\u9875\u9762\u4e0d\u5b58\u5728" ];
+var arrInterErrs = [ "Internal Error", "\u9875\u9762\u4e0d\u5b58\u5728", "502 Bad Gateway", "503 Service Temporarily Unavailable", "504 Gateway Time-out", "403 Forbidden" ];
 
 /****************************************************
 * General Exception Parser: 4xx And 5xx Internal    *
