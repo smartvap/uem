@@ -384,8 +384,11 @@ var parseException_E = function (doc) {
 		if (pArr.length > 0) {
 			var jsonObj = getCommonPart(doc, 'Special');
 			for (var i = 0; i < pArr.length; i++) {
-				var attrName = pArr[i].attributes[1].nodeValue; // Get the key name
-				if (attrName.length > 32) { // If key too long, then customize to Msg_x
+				var attrName = '';
+				if (pArr[i].attributes.length >= 2) {
+					attrName = pArr[i].attributes[1].nodeValue; // Get the key name
+				}
+				if (attrName == '' || attrName.length > 32) { // If key too long, then customize to Msg_x
 					attrName = 'Msg_' + i;
 				}
 				jsonObj['Error_Detail'][attrName] = pArr[i].innerText;
@@ -532,16 +535,17 @@ var parseException_I = function (doc) {
 	}
 }
 
-/* General Error Keywords */
-var arrGenErrs = [ "\u9519\u8bef", "\u5f02\u5e38", "\u4e0d\u5b58\u5728", "\u4e0d\u5bf9\u5e94" ];
+/****************************************************
+* General Error Keywords                            *
+****************************************************/
+var arrGenErrs = [ "\u9519\u8bef", "\u5f02\u5e38", "\u4e0d\u5b58\u5728", "\u4e0d\u5bf9\u5e94", "\u5931\u8d25" ];
 
-/****************************************
- * General Exception Collector          *
- * Purpose: When the special exception  *
- * detector cannot parse the current    *
- * page, it will be handled over to the *
- * general exception collector          *
- ***************************************/
+/****************************************************
+* General Exception Collector                       *
+* Purpose: When the special exception detector      *
+* cannot parse the current page, it will be handled *
+* over to the general exception collector.          *
+****************************************************/
 var intercept = function (doc) {
 	if (!doc || !doc.body || !doc.body.innerText || doc['spec_err']) return; // If already parsed by the special exception detector
 	var sErr = '';
@@ -560,8 +564,11 @@ var intercept = function (doc) {
 	}
 }
 
-/* Top UEM Common Info JSON Object Initialize */
-/* Current Document UEM Common Info JSON Object Initialize */
+/****************************************************
+* Top UEM Common Info JSON Object Initialize        *
+* Current Document UEM Common Info JSON Object      *
+* Initialize.                                       *
+****************************************************/
 var getUemCommonInfo = function (doc) {
 	if (!top['uem_common']) top['uem_common'] = {};
 	if (!top['uem_common']['Network']) top['uem_common']['Network'] = qryNetInf();
@@ -603,8 +610,11 @@ var getUemCommonInfo = function (doc) {
 	}
 }
 
-/* Trace the path of the top window */
-/* The Modal or Modaless dialog should trace the opener */
+/****************************************************
+* Trace the path of the top window                  *
+* The Modal or Modaless dialog should trace the     *
+* opener.                                           *
+****************************************************/
 var tracePath = function (doc) {
 	var wnd = doc.parentWindow;
 	var path = wnd.location.pathname;
@@ -636,7 +646,10 @@ var tracePath = function (doc) {
 	// }
 	doc['Full_Path'] = path; // Write path to properties for a rainy day
 }
-/* Get Key Business Information */
+
+/****************************************************
+* Get Key Business Information                      *
+****************************************************/
 var getKeyBusiInfo = function (doc) {
 	var para = doc.location.search;
 	var idx = para.indexOf('BMEBusiness');
@@ -646,7 +659,10 @@ var getKeyBusiInfo = function (doc) {
 	if (arr.length >= 2) doc['BMEBusiness'] = arr[1];
 	
 }
-/* Observe Element Property Changes */
+
+/****************************************************
+* Observe Element Property Changes                  *
+****************************************************/
 var obsvElemPropChgs = function (elem, options, actions) {
 	var callback = function (records) {
 		records.map(function (record) {
@@ -658,7 +674,9 @@ var obsvElemPropChgs = function (elem, options, actions) {
 	return mo;
 }
 
-/* SDCMCC Main Frame Loading Monitor */
+/****************************************************
+* SDCMCC Main Frame Loading Monitor                 *
+****************************************************/
 var monitorMainFrmLoad = function (doc) {
 	if (doc.location.pathname != "/ngcrm/crm3/mainFrameForCRM3.action") return;
 	if (!doc.getElementById('loading')) return;
@@ -679,7 +697,9 @@ var monitorMainFrmLoad = function (doc) {
 	});
 }
 
-/* SDCMCC Tabsets Monitor */
+/****************************************************
+* SDCMCC Tabsets Monitor                            *
+****************************************************/
 var monitorTabSet = function (doc) {
 	if (doc.location.pathname != "/ngcrm/crm3/mainFrameForCRM3.action") return; // You can find tabset in main frame
 	if (!top || !top.publicObject || !top.publicObject['mainTab'] || !top.publicObject["mainTab"].oTabHeadSet) return;
@@ -727,6 +747,36 @@ var monitorTabSet = function (doc) {
 	});
 }
 
+/****************************************************
+* Intercept AJAX Callbacks                          *
+****************************************************/
+var parseException_J = function (doc) {
+	// If parameter is not a valid document, or the popwin monitor has been set for the current page, then leave
+	if (!doc || doc['Mon_Popwin']) return;
+	// Add monitor, { attributes: true, childList : true, subtree: true }
+	var monPopwin = obsvElemPropChgs(doc.body, { childList : true }, function (elem) {
+		for (var i = 0; i < elem.addedNodes.length; i++) {
+			console.log(elem.addedNodes[i].innerText.replace(/\r\n/g, ''));
+		}
+	});
+	doc['Mon_Popwin'] = monPopwin; // Save monitor to current document
+	doc.parentWindow.addEventListener('beforeunload', function (evt) {
+		if (evt.currentTarget && evt.currentTarget.document['Mon_Popwin'])
+			evt.currentTarget.document['Mon_Popwin'].disconnect();
+	}, false);
+	if (typeof($) != 'undefined' && typeof($.ajax) != 'undefined') {
+		$(doc.parentWindow).unload(function(evt) {
+			evt.currentTarget.document['Mon_Popwin'].disconnect();
+			delete evt.currentTarget.document['Mon_Popwin'];
+		});
+	} else {
+		doc.parentWindow.addEventListener('unload', function (evt) {
+			evt.currentTarget.document['Mon_Popwin'].disconnect();
+			delete evt.currentTarget.document['Mon_Popwin'];
+		}, false);
+	}
+}
+
 getUemCommonInfo(document);
 parseException_H(document); // Sometimes alert and confirm are triggered before page onload
 
@@ -751,6 +801,7 @@ if (window.addEventListener) {
 		parseException_G(document);
 		parseException_H(document);
 		parseException_I(document);
+		parseException_J(document);
 		intercept(document);
 	}, false);
 } else if (window.attachEvent) {
@@ -766,6 +817,7 @@ if (window.addEventListener) {
 		parseException_G(document);
 		parseException_H(document);
 		parseException_I(document);
+		parseException_J(document);
 		intercept(document);
 	});
 }

@@ -6,8 +6,10 @@ app.configure(function() {
 });
 app.post('/service/uem/user_actions.do', function(req, res) {
 	console.log();
-	execute('INSERT INTO user_action_json(json) VALUES (?)', [ JSON.stringify(req.body) ], function (err, vals, fields) {
-		if (err) console.log(err);
+	execute('INSERT INTO user_action_json(json) VALUES (?)', [ JSON
+			.stringify(req.body) ], function(err, vals, fields) {
+		if (err)
+			console.log(err);
 	});
 	res.send('Success!');
 });
