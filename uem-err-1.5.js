@@ -154,7 +154,7 @@ function postAjax(json_str) {
 		});
 	} else {
 		var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
-		xhr.open("POST", 'http://10.19.203.141/uem/uem-1.5.do', true);
+		xhr.open("POST", uemRcvURI, true);
 		xhr.setRequestHeader('contentType', "application/json; charset=utf-8");
 		xhr.setRequestHeader('dataType', "json");
 		// xhr.setRequestHeader('XTag', genXTag());
@@ -764,17 +764,17 @@ var parseException_J = function (doc) {
 		if (evt.currentTarget && evt.currentTarget.document['Mon_Popwin'])
 			evt.currentTarget.document['Mon_Popwin'].disconnect();
 	}, false);
-	if (typeof($) != 'undefined' && typeof($.ajax) != 'undefined') {
-		$(doc.parentWindow).unload(function(evt) {
-			evt.currentTarget.document['Mon_Popwin'].disconnect();
-			delete evt.currentTarget.document['Mon_Popwin'];
-		});
-	} else {
-		doc.parentWindow.addEventListener('unload', function (evt) {
-			evt.currentTarget.document['Mon_Popwin'].disconnect();
-			delete evt.currentTarget.document['Mon_Popwin'];
-		}, false);
-	}
+	//if (typeof($) != 'undefined' && typeof($.ajax) != 'undefined') {
+	//	$(doc.parentWindow).unload(function(evt) {
+	//		evt.currentTarget.document['Mon_Popwin'].disconnect();
+	//		delete evt.currentTarget.document['Mon_Popwin'];
+	//	});
+	//} else {
+	//	doc.parentWindow.addEventListener('unload', function (evt) {
+	//		evt.currentTarget.document['Mon_Popwin'].disconnect();
+	//		delete evt.currentTarget.document['Mon_Popwin'];
+	//	}, false);
+	//}
 }
 
 getUemCommonInfo(document);
