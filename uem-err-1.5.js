@@ -802,7 +802,7 @@ if (window.addEventListener) {
 		parseException_H(document);
 		parseException_I(document);
 		parseException_J(document);
-		intercept(document);
+		// intercept(document);
 	}, false);
 } else if (window.attachEvent) {
 	window.attachEvent('onload', function () {
@@ -818,6 +818,6 @@ if (window.addEventListener) {
 		parseException_H(document);
 		parseException_I(document);
 		parseException_J(document);
-		intercept(document);
+		// intercept(document);
 	});
 }
